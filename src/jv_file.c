@@ -5,9 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "jv.h"
 #include "jv_unicode.h"
+
+#ifndef S_ISDIR
+#define S_ISDIR(m)      (((m) & S_IFMT) == S_IFDIR)
+#endif
 
 jv jv_load_file(const char* filename, int raw) {
   struct stat sb;

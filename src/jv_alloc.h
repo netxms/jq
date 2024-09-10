@@ -10,6 +10,6 @@ void* jv_mem_calloc_unguarded(size_t, size_t);
 char* jv_mem_strdup(const char *);
 char* jv_mem_strdup_unguarded(const char *);
 void jv_mem_free(void*);
-__attribute__((warn_unused_result)) void* jv_mem_realloc(void*, size_t);
+void* jv_mem_realloc(void*, size_t);
 
 #endif

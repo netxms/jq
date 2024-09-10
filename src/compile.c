@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "compile.h"
 #include "bytecode.h"
 #include "locfile.h"

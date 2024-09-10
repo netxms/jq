@@ -311,14 +311,14 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
       int idx = jv_number_value(last);
 
       if (jv_is_valid(p->next)) {
-        p->output = JV_ARRAY(jv_copy(p->path), p->next);
+        p->output = JV_ARRAY_2(jv_copy(p->path), p->next);
         p->next = jv_invalid();
       }
       p->path = jv_array_set(p->path, p->stacklen - 1, jv_number(idx + 1));
       p->last_seen = JV_LAST_COMMA;
     } else if (k == JV_KIND_STRING) {
       if (jv_is_valid(p->next)) {
-        p->output = JV_ARRAY(jv_copy(p->path), p->next);
+        p->output = JV_ARRAY_2(jv_copy(p->path), p->next);
         p->next = jv_invalid();
       }
       p->path = jv_array_set(p->path, p->stacklen - 1, jv_null()); // ready for another key:value pair
@@ -348,10 +348,10 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
     if (k != JV_KIND_NUMBER)
       return "Unmatched ']' in the middle of an object";
     if (jv_is_valid(p->next)) {
-      p->output = JV_ARRAY(jv_copy(p->path), p->next, jv_true());
+      p->output = JV_ARRAY_3(jv_copy(p->path), p->next, jv_true());
       p->next = jv_invalid();
     } else if (p->last_seen != JV_LAST_OPEN_ARRAY) {
-      p->output = JV_ARRAY(jv_copy(p->path));
+      p->output = JV_ARRAY_1(jv_copy(p->path));
     }
 
     p->path = jv_array_slice(p->path, 0, --(p->stacklen)); // pop
@@ -360,7 +360,7 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
     p->next = jv_invalid();
 
     if (p->last_seen == JV_LAST_OPEN_ARRAY)
-      p->output = JV_ARRAY(jv_copy(p->path), jv_array()); // Empty arrays are leaves
+      p->output = JV_ARRAY_2(jv_copy(p->path), jv_array()); // Empty arrays are leaves
 
     if (p->stacklen == 0)
       p->last_seen = JV_LAST_NONE;
@@ -385,7 +385,7 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
     if (jv_is_valid(p->next)) {
       if (k != JV_KIND_STRING)
         return "Objects must consist of key:value pairs";
-      p->output = JV_ARRAY(jv_copy(p->path), p->next, jv_true());
+      p->output = JV_ARRAY_3(jv_copy(p->path), p->next, jv_true());
       p->next = jv_invalid();
     } else {
       // Perhaps {"a":[]}
@@ -400,14 +400,14 @@ static pfunc stream_token(struct jv_parser* p, char ch) {
       if (p->last_seen != JV_LAST_VALUE && p->last_seen != JV_LAST_OPEN_OBJECT)
         return "Unmatched '}'";
       if (p->last_seen != JV_LAST_OPEN_OBJECT)
-        p->output = JV_ARRAY(jv_copy(p->path));
+        p->output = JV_ARRAY_1(jv_copy(p->path));
     }
     p->path = jv_array_slice(p->path, 0, --(p->stacklen)); // pop
     jv_free(p->next);
     p->next = jv_invalid();
 
     if (p->last_seen == JV_LAST_OPEN_OBJECT)
-      p->output = JV_ARRAY(jv_copy(p->path), jv_object()); // Empty arrays are leaves
+      p->output = JV_ARRAY_2(jv_copy(p->path), jv_object()); // Empty arrays are leaves
 
     if (p->stacklen == 0)
       p->last_seen = JV_LAST_NONE;
@@ -592,7 +592,7 @@ static int parse_check_done(struct jv_parser* p, jv* out) {
 
 static int stream_check_done(struct jv_parser* p, jv* out) {
   if (p->stacklen == 0 && jv_is_valid(p->next)) {
-    *out = JV_ARRAY(jv_copy(p->path),p->next);
+    *out = JV_ARRAY_2(jv_copy(p->path),p->next);
     p->next = jv_invalid();
     return 1;
   } else if (jv_is_valid(p->output)) {
@@ -760,7 +760,7 @@ static jv make_error(struct jv_parser* p, const char *fmt, ...) {
   jv e = jv_string_vfmt(fmt, ap);
   va_end(ap);
   if ((p->flags & JV_PARSE_STREAM_ERRORS))
-    return JV_ARRAY(e, jv_copy(p->path));
+    return JV_ARRAY_2(e, jv_copy(p->path));
   return jv_invalid_with_msg(e);
 }
 
@@ -848,7 +848,7 @@ jv jv_parser_next(struct jv_parser* p) {
     // p->next is either invalid (nothing here, but no syntax error)
     // or valid (this is the value). either way it's the thing to return
     if ((p->flags & JV_PARSE_STREAMING) && jv_is_valid(p->next)) {
-      value = JV_ARRAY(jv_copy(p->path), p->next); // except in streaming mode we've got to make it [path,value]
+      value = JV_ARRAY_2(jv_copy(p->path), p->next); // except in streaming mode we've got to make it [path,value]
     } else {
       value = p->next;
     }

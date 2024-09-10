@@ -58,3 +58,9 @@ cscope.in.out
 cscope.out
 cscope.po.out
 jq.dSYM
+
+x64
+ARM64
+Debug
+Release
+*.vcxproj.user

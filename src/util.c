@@ -34,7 +34,9 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <stddef.h>
 #ifdef HAVE_ALLOCA_H
@@ -59,6 +61,9 @@ void *alloca (size_t);
 #include <shellapi.h>
 #include <wchar.h>
 #include <wtypes.h>
+
+#define PATH_MAX MAX_PATH
+
 #endif
 
 
@@ -68,7 +73,7 @@ void *alloca (size_t);
 #include "jv_unicode.h"
 
 #ifdef WIN32
-FILE *fopen(const char *fname, const char *mode) {
+static FILE *jq_fopen(const char *fname, const char *mode) {
   size_t sz = sizeof(wchar_t) * MultiByteToWideChar(CP_UTF8, 0, fname, -1, NULL, 0);
   wchar_t *wfname = alloca(sz + 2); // +2 is not needed, but just in case
   MultiByteToWideChar(CP_UTF8, 0, fname, -1, wfname, sz);
@@ -78,6 +83,8 @@ FILE *fopen(const char *fname, const char *mode) {
   MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, sz);
   return _wfopen(wfname, wmode);
 }
+#else
+#define jq_fopen fopen
 #endif
 
 jv expand_path(jv path) {
@@ -281,7 +288,7 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
         state->current_input = stdin;
         state->current_filename = jv_string("<stdin>");
       } else {
-        state->current_input = fopen(f, "r");
+        state->current_input = jq_fopen(f, "r");
         state->current_filename = jv_string(f);
         if (!state->current_input) {
           state->err_cb(state->err_cb_data, f);

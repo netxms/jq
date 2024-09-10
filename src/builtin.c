@@ -11,7 +11,9 @@
 #ifdef __OpenBSD__
 # define _BSD_SOURCE
 #endif
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
@@ -1419,7 +1421,7 @@ static jv f_stderr(jq_state *jq, jv input) {
 }
 
 static jv tm2jv(struct tm *tm) {
-  return JV_ARRAY(jv_number(tm->tm_year + 1900),
+  return JV_ARRAY_8(jv_number(tm->tm_year + 1900),
                   jv_number(tm->tm_mon),
                   jv_number(tm->tm_mday),
                   jv_number(tm->tm_hour),
@@ -1630,7 +1632,7 @@ static int jv2tm(jv a, struct tm *tm, int localtime) {
     double d = jv_number_value(n);
     if (i == 0) /* year */
       d -= 1900;
-    *(int *)((void *)tm + offsets[i]) = d < INT_MIN ? INT_MIN :
+    *(int *)((char *)tm + offsets[i]) = d < INT_MIN ? INT_MIN :
                                         d > INT_MAX ? INT_MAX : (int)d;
     jv_free(n);
   }
@@ -2049,8 +2051,7 @@ static block bind_bytecoded_builtins(block b) {
 
 static const char jq_builtins[] = {
 /* Include jq-coded builtins */
-#include "src/builtin.inc"
-  '\0',
+#include "builtin.inc"
 };
 
 static block gen_builtin_list(block builtins) {

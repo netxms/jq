@@ -258,6 +258,7 @@ struct tls_values {
 
 #ifdef _MSC_VER
 static __declspec(thread) struct nomem_handler nomem_handler;
+static __declspec(thread) struct tls_values values;
 #else
 static __thread struct tls_values values;
 #endif
@@ -296,8 +297,8 @@ w32_service_thread_detach(void *unused)
     }
 }
 
-extern void jv_tsd_dtoa_ctx_init();
-extern void jv_tsd_dtoa_ctx_fini();
+void jv_tsd_dtoa_ctx_init();
+void jv_tsd_dtoa_ctx_fini();
 void jv_tsd_dec_ctx_fini();
 void jv_tsd_dec_ctx_init();
 

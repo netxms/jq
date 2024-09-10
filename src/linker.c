@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#ifndef _WIN32
 #include <libgen.h>
+#endif
 
 #ifdef WIN32
 #include <shlwapi.h>
@@ -85,7 +87,7 @@ static jv build_lib_search_chain(jq_state *jq, jv search_path, jv jq_origin, jv 
   jv_free(jq_origin);
   jv_free(lib_origin);
   jv_free(search_path);
-  return JV_ARRAY(expanded, err);
+  return JV_ARRAY_2(expanded, err);
 }
 
 // Doesn't actually check that name not be an absolute path, and we
@@ -359,8 +361,14 @@ static int load_library(jq_state *jq, jv lib_path, int is_data, int raw, int opt
     locfile_free(src);
     if (nerrors == 0) {
       char *lib_origin = strdup(jv_string_value(lib_path));
+#ifdef _WIN32
+      char *dname = lib_origin;
+      PathRemoveFileSpecA(dname);
+#else
+      char *dname = dirname(lib_origin);
+#endif
       nerrors += process_dependencies(jq, jq_get_jq_origin(jq),
-                                      jv_string(dirname(lib_origin)),
+                                      jv_string(dname),
                                       &program, lib_state);
       free(lib_origin);
       program = block_bind_self(program, OP_IS_CALL_PSEUDO);

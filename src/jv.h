@@ -16,6 +16,16 @@ extern "C" {
 # define JQ_FALLTHROUGH do {} while (0) /* fallthrough */
 #endif
 
+#ifdef _WIN32
+#ifdef JQ_EXPORTS
+#define JQ_EXPORTABLE __declspec(dllexport)
+#else
+#define JQ_EXPORTABLE __declspec(dllimport)
+#endif
+#else
+#define JQ_EXPORTABLE
+#endif
+
 typedef enum {
   JV_KIND_INVALID,
   JV_KIND_NULL,
@@ -47,48 +57,48 @@ typedef struct {
  * Except jv_copy
  */
 
-jv_kind jv_get_kind(jv);
-const char* jv_kind_name(jv_kind);
+jv_kind JQ_EXPORTABLE jv_get_kind(jv);
+const char JQ_EXPORTABLE *jv_kind_name(jv_kind);
 static int jv_is_valid(jv x) { return jv_get_kind(x) != JV_KIND_INVALID; }
 
-jv jv_copy(jv);
-void jv_free(jv);
+jv JQ_EXPORTABLE jv_copy(jv);
+void JQ_EXPORTABLE jv_free(jv);
 
-int jv_get_refcnt(jv);
+int JQ_EXPORTABLE jv_get_refcnt(jv);
 
-int jv_equal(jv, jv);
-int jv_identical(jv, jv);
-int jv_contains(jv, jv);
+int JQ_EXPORTABLE jv_equal(jv, jv);
+int JQ_EXPORTABLE jv_identical(jv, jv);
+int JQ_EXPORTABLE jv_contains(jv, jv);
 
-jv jv_invalid(void);
-jv jv_invalid_with_msg(jv);
-jv jv_invalid_get_msg(jv);
-int jv_invalid_has_msg(jv);
+jv JQ_EXPORTABLE jv_invalid(void);
+jv JQ_EXPORTABLE jv_invalid_with_msg(jv);
+jv JQ_EXPORTABLE jv_invalid_get_msg(jv);
+int JQ_EXPORTABLE jv_invalid_has_msg(jv);
 
-jv jv_null(void);
-jv jv_true(void);
-jv jv_false(void);
-jv jv_bool(int);
+jv JQ_EXPORTABLE jv_null(void);
+jv JQ_EXPORTABLE jv_true(void);
+jv JQ_EXPORTABLE jv_false(void);
+jv JQ_EXPORTABLE jv_bool(int);
 
-jv jv_number(double);
-jv jv_number_with_literal(const char*);
-double jv_number_value(jv);
-int jv_is_integer(jv);
-jv jv_number_abs(jv);
-jv jv_number_negate(jv);
+jv JQ_EXPORTABLE jv_number(double);
+jv JQ_EXPORTABLE jv_number_with_literal(const char*);
+double JQ_EXPORTABLE jv_number_value(jv);
+int JQ_EXPORTABLE jv_is_integer(jv);
+jv JQ_EXPORTABLE jv_number_abs(jv);
+jv JQ_EXPORTABLE jv_number_negate(jv);
 
-int jv_number_has_literal(jv);
-const char* jv_number_get_literal(jv);
+int JQ_EXPORTABLE jv_number_has_literal(jv n);
+const char JQ_EXPORTABLE *jv_number_get_literal(jv);
 
-jv jv_array(void);
-jv jv_array_sized(int);
-int jv_array_length(jv);
-jv jv_array_get(jv, int);
-jv jv_array_set(jv, int, jv);
-jv jv_array_append(jv, jv);
-jv jv_array_concat(jv, jv);
-jv jv_array_slice(jv, int, int);
-jv jv_array_indexes(jv, jv);
+jv JQ_EXPORTABLE jv_array(void);
+jv JQ_EXPORTABLE jv_array_sized(int);
+int JQ_EXPORTABLE jv_array_length(jv);
+jv JQ_EXPORTABLE jv_array_get(jv, int);
+jv JQ_EXPORTABLE jv_array_set(jv, int, jv);
+jv JQ_EXPORTABLE jv_array_append(jv, jv);
+jv JQ_EXPORTABLE jv_array_concat(jv, jv);
+jv JQ_EXPORTABLE jv_array_slice(jv, int, int);
+jv JQ_EXPORTABLE jv_array_indexes(jv, jv);
 #define jv_array_foreach(a, i, x) \
   for (int jv_len__ = jv_array_length(jv_copy(a)), i=0, jv_j__ = 1;     \
        jv_j__; jv_j__ = 0)                                              \
@@ -120,41 +130,39 @@ jv jv_array_indexes(jv, jv);
 #define JV_VPRINTF_LIKE(fmt_arg_num)
 #endif
 
+jv JQ_EXPORTABLE jv_string(const char*);
+jv JQ_EXPORTABLE jv_string_sized(const char*, int);
+jv JQ_EXPORTABLE jv_string_empty(int len);
+int JQ_EXPORTABLE jv_string_length_bytes(jv);
+int JQ_EXPORTABLE jv_string_length_codepoints(jv);
+unsigned long JQ_EXPORTABLE jv_string_hash(jv);
+const char JQ_EXPORTABLE *jv_string_value(jv);
+jv JQ_EXPORTABLE jv_string_indexes(jv j, jv k);
+jv JQ_EXPORTABLE jv_string_slice(jv j, int start, int end);
+jv JQ_EXPORTABLE jv_string_concat(jv, jv);
+jv JQ_EXPORTABLE jv_string_vfmt(const char*, va_list) JV_VPRINTF_LIKE(1);
+jv JQ_EXPORTABLE jv_string_fmt(const char*, ...) JV_PRINTF_LIKE(1, 2);
+jv JQ_EXPORTABLE jv_string_append_codepoint(jv a, uint32_t c);
+jv JQ_EXPORTABLE jv_string_append_buf(jv a, const char* buf, int len);
+jv JQ_EXPORTABLE jv_string_append_str(jv a, const char* str);
+jv JQ_EXPORTABLE jv_string_split(jv j, jv sep);
+jv JQ_EXPORTABLE jv_string_explode(jv j);
+jv JQ_EXPORTABLE jv_string_implode(jv j);
 
-jv jv_string(const char*);
-jv jv_string_sized(const char*, int);
-jv jv_string_empty(int len);
-int jv_string_length_bytes(jv);
-int jv_string_length_codepoints(jv);
-unsigned long jv_string_hash(jv);
-const char* jv_string_value(jv);
-jv jv_string_indexes(jv j, jv k);
-jv jv_string_slice(jv j, int start, int end);
-jv jv_string_concat(jv, jv);
-jv jv_string_vfmt(const char*, va_list) JV_VPRINTF_LIKE(1);
-jv jv_string_fmt(const char*, ...) JV_PRINTF_LIKE(1, 2);
-jv jv_string_append_codepoint(jv a, uint32_t c);
-jv jv_string_append_buf(jv a, const char* buf, int len);
-jv jv_string_append_str(jv a, const char* str);
-jv jv_string_repeat(jv j, int n);
-jv jv_string_split(jv j, jv sep);
-jv jv_string_explode(jv j);
-jv jv_string_implode(jv j);
+jv JQ_EXPORTABLE jv_object(void);
+jv JQ_EXPORTABLE jv_object_get(jv object, jv key);
+int JQ_EXPORTABLE jv_object_has(jv object, jv key);
+jv JQ_EXPORTABLE jv_object_set(jv object, jv key, jv value);
+jv JQ_EXPORTABLE jv_object_delete(jv object, jv key);
+int JQ_EXPORTABLE jv_object_length(jv object);
+jv JQ_EXPORTABLE jv_object_merge(jv, jv);
+jv JQ_EXPORTABLE jv_object_merge_recursive(jv, jv);
 
-jv jv_object(void);
-jv jv_object_get(jv object, jv key);
-int jv_object_has(jv object, jv key);
-jv jv_object_set(jv object, jv key, jv value);
-jv jv_object_delete(jv object, jv key);
-int jv_object_length(jv object);
-jv jv_object_merge(jv, jv);
-jv jv_object_merge_recursive(jv, jv);
-
-int jv_object_iter(jv);
-int jv_object_iter_next(jv, int);
-int jv_object_iter_valid(jv, int);
-jv jv_object_iter_key(jv, int);
-jv jv_object_iter_value(jv, int);
+int JQ_EXPORTABLE jv_object_iter(jv);
+int JQ_EXPORTABLE jv_object_iter_next(jv, int);
+int JQ_EXPORTABLE jv_object_iter_valid(jv, int);
+jv JQ_EXPORTABLE jv_object_iter_key(jv, int);
+jv JQ_EXPORTABLE jv_object_iter_value(jv, int);
 #define jv_object_foreach(t, k, v)                                      \
   for (int jv_i__ = jv_object_iter(t), jv_j__ = 1; jv_j__; jv_j__ = 0)  \
     for (jv k, v;                                                       \
@@ -213,7 +221,7 @@ jv jv_object_iter_value(jv, int);
 
 
 
-int jv_get_refcnt(jv);
+int JQ_EXPORTABLE jv_get_refcnt(jv);
 
 enum jv_print_flags {
   JV_PRINT_PRETTY   = 1,
@@ -229,12 +237,12 @@ enum jv_print_flags {
   JV_PRINT_SPACE2   = 1024,
 };
 #define JV_PRINT_INDENT_FLAGS(n) \
-    ((n) < 0 || (n) > 7 ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) << 8 | JV_PRINT_PRETTY)
-void jv_dumpf(jv, FILE *f, int flags);
-void jv_dump(jv, int flags);
-void jv_show(jv, int flags);
-jv jv_dump_string(jv, int flags);
-char *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
+    ((n) < 0 || (n) > 7 ? JV_PRINT_TAB | JV_PRINT_PRETTY : (n) == 0 ? 0 : (n) << 8 | JV_PRINT_PRETTY)
+void JQ_EXPORTABLE jv_dumpf(jv, FILE *f, int flags);
+void JQ_EXPORTABLE jv_dump(jv, int flags);
+void JQ_EXPORTABLE jv_show(jv, int flags);
+jv JQ_EXPORTABLE jv_dump_string(jv, int flags);
+char JQ_EXPORTABLE *jv_dump_string_trunc(jv x, char *outbuf, size_t bufsize);
 
 enum {
   JV_PARSE_SEQ              = 1,
@@ -242,34 +250,34 @@ enum {
   JV_PARSE_STREAM_ERRORS    = 4,
 };
 
-jv jv_parse(const char* string);
-jv jv_parse_sized(const char* string, int length);
-jv jv_parse_custom_flags(const char* string, int flags);
+jv JQ_EXPORTABLE jv_parse(const char* string);
+jv JQ_EXPORTABLE jv_parse_sized(const char* string, int length);
+jv JQ_EXPORTABLE jv_parse_custom_flags(const char* string, int flags);
 
 typedef void (*jv_nomem_handler_f)(void *);
-void jv_nomem_handler(jv_nomem_handler_f, void *);
+void JQ_EXPORTABLE jv_nomem_handler(jv_nomem_handler_f, void *);
 
-jv jv_load_file(const char *, int);
+jv JQ_EXPORTABLE jv_load_file(const char *, int);
 
 typedef struct jv_parser jv_parser;
-jv_parser* jv_parser_new(int);
-void jv_parser_set_buf(jv_parser*, const char*, int, int);
-int jv_parser_remaining(jv_parser*);
-jv jv_parser_next(jv_parser*);
-void jv_parser_free(jv_parser*);
+jv_parser JQ_EXPORTABLE *jv_parser_new(int);
+void JQ_EXPORTABLE jv_parser_set_buf(jv_parser*, const char*, int, int);
+int JQ_EXPORTABLE jv_parser_remaining(jv_parser*);
+jv JQ_EXPORTABLE jv_parser_next(jv_parser*);
+void JQ_EXPORTABLE jv_parser_free(jv_parser*);
 
-jv jv_get(jv, jv);
-jv jv_set(jv, jv, jv);
-jv jv_has(jv, jv);
-jv jv_setpath(jv, jv, jv);
-jv jv_getpath(jv, jv);
-jv jv_delpaths(jv, jv);
-jv jv_keys(jv /*object or array*/);
-jv jv_keys_unsorted(jv /*object or array*/);
-int jv_cmp(jv, jv);
-jv jv_sort(jv, jv);
-jv jv_group(jv, jv);
-jv jv_unique(jv, jv);
+jv JQ_EXPORTABLE jv_get(jv, jv);
+jv JQ_EXPORTABLE jv_set(jv, jv, jv);
+jv JQ_EXPORTABLE jv_has(jv, jv);
+jv JQ_EXPORTABLE jv_setpath(jv, jv, jv);
+jv JQ_EXPORTABLE jv_getpath(jv, jv);
+jv JQ_EXPORTABLE jv_delpaths(jv, jv);
+jv JQ_EXPORTABLE jv_keys(jv /*object or array*/);
+jv JQ_EXPORTABLE jv_keys_unsorted(jv /*object or array*/);
+int JQ_EXPORTABLE jv_cmp(jv, jv);
+jv JQ_EXPORTABLE jv_sort(jv, jv);
+jv JQ_EXPORTABLE jv_group(jv, jv);
+jv JQ_EXPORTABLE jv_unique(jv, jv);
 
 #ifdef __cplusplus
 }

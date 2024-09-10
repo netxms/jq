@@ -5,8 +5,8 @@
 #include "jv.h"
 
 struct nomem_handler {
-    jv_nomem_handler_f handler;
-    void *data;
+   jv_nomem_handler_f handler;
+   void *data;
 };
 
 #if !defined(HAVE_PTHREAD_KEY_CREATE) || \
@@ -32,6 +32,7 @@ static __thread struct nomem_handler nomem_handler;
 #ifdef USE_TLS
 void jv_nomem_handler(jv_nomem_handler_f handler, void *data) {
   nomem_handler.handler = handler;
+  nomem_handler.data = data;
 }
 
 static void memory_exhausted(void) {
