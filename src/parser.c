@@ -440,22 +440,22 @@ static jv check_object_key(block k) {
 }
 
 static block gen_index(block obj, block key) {
-  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX));
+  return BLOCK_3(gen_subexp(key), obj, gen_op_simple(INDEX));
 }
 
 static block gen_index_opt(block obj, block key) {
-  return BLOCK(gen_subexp(key), obj, gen_op_simple(INDEX_OPT));
+  return BLOCK_3(gen_subexp(key), obj, gen_op_simple(INDEX_OPT));
 }
 
 static block gen_slice_index(block obj, block start, block end, opcode idx_op) {
-  block key = BLOCK(gen_subexp(gen_const(jv_object())),
+  block key = BLOCK_7(gen_subexp(gen_const(jv_object())),
                     gen_subexp(gen_const(jv_string("start"))),
                     gen_subexp(start),
                     gen_op_simple(INSERT),
                     gen_subexp(gen_const(jv_string("end"))),
                     gen_subexp(end),
                     gen_op_simple(INSERT));
-  return BLOCK(key, obj, gen_op_simple(idx_op));
+  return BLOCK_3(key, obj, gen_op_simple(idx_op));
 }
 
 static block constant_fold(block a, block b, int op) {
@@ -510,28 +510,28 @@ static block gen_binop(block a, block b, int op) {
   }
   assert(funcname);
 
-  return gen_call(funcname, BLOCK(gen_lambda(a), gen_lambda(b)));
+  return gen_call(funcname, BLOCK_2(gen_lambda(a), gen_lambda(b)));
 }
 
 static block gen_format(block a, jv fmt) {
-  return BLOCK(a, gen_call("format", gen_lambda(gen_const(fmt))));
+  return BLOCK_2(a, gen_call("format", gen_lambda(gen_const(fmt))));
 }
 
 static block gen_definedor_assign(block object, block val) {
   block tmp = gen_op_var_fresh(STOREV, "tmp");
-  return BLOCK(gen_op_simple(DUP),
+  return BLOCK_4(gen_op_simple(DUP),
                val, tmp,
-               gen_call("_modify", BLOCK(gen_lambda(object),
+               gen_call("_modify", BLOCK_2(gen_lambda(object),
                                          gen_lambda(gen_definedor(gen_noop(),
                                                                   gen_op_bound(LOADV, tmp))))));
 }
 
 static block gen_update(block object, block val, int optype) {
   block tmp = gen_op_var_fresh(STOREV, "tmp");
-  return BLOCK(gen_op_simple(DUP),
+  return BLOCK_4(gen_op_simple(DUP),
                val,
                tmp,
-               gen_call("_modify", BLOCK(gen_lambda(object),
+               gen_call("_modify", BLOCK_2(gen_lambda(object),
                                          gen_lambda(gen_binop(gen_noop(),
                                                               gen_op_bound(LOADV, tmp),
                                                               optype)))));
@@ -2504,7 +2504,7 @@ yyreduce:
   case 2: /* TopLevel: Module Imports Query  */
 #line 282 "src/parser.y"
                      {
-  *answer = BLOCK((yyvsp[-2].blk), (yyvsp[-1].blk), gen_op_simple(TOP), (yyvsp[0].blk));
+  *answer = BLOCK_4((yyvsp[-2].blk), (yyvsp[-1].blk), gen_op_simple(TOP), (yyvsp[0].blk));
 }
 #line 2510 "src/parser.c"
     break;
@@ -2512,7 +2512,7 @@ yyreduce:
   case 3: /* TopLevel: Module Imports FuncDefs  */
 #line 285 "src/parser.y"
                         {
-  *answer = BLOCK((yyvsp[-2].blk), (yyvsp[-1].blk), (yyvsp[0].blk));
+  *answer = BLOCK_3((yyvsp[-2].blk), (yyvsp[-1].blk), (yyvsp[0].blk));
 }
 #line 2518 "src/parser.c"
     break;
@@ -2554,7 +2554,7 @@ yyreduce:
   case 7: /* Imports: Import Imports  */
 #line 311 "src/parser.y"
                {
-  (yyval.blk) = BLOCK((yyvsp[-1].blk), (yyvsp[0].blk));
+  (yyval.blk) = BLOCK_2((yyvsp[-1].blk), (yyvsp[0].blk));
 }
 #line 2560 "src/parser.c"
     break;
@@ -2637,7 +2637,7 @@ yyreduce:
   case 17: /* Expr: Expr '=' Expr  */
 #line 352 "src/parser.y"
               {
-  (yyval.blk) = gen_call("_assign", BLOCK(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk))));
+  (yyval.blk) = gen_call("_assign", BLOCK_2(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk))));
 }
 #line 2643 "src/parser.c"
     break;
@@ -2669,7 +2669,7 @@ yyreduce:
   case 21: /* Expr: Expr "|=" Expr  */
 #line 364 "src/parser.y"
                {
-  (yyval.blk) = gen_call("_modify", BLOCK(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk))));
+  (yyval.blk) = gen_call("_modify", BLOCK_2(gen_lambda((yyvsp[-2].blk)), gen_lambda((yyvsp[0].blk))));
 }
 #line 2675 "src/parser.c"
     break;
@@ -2918,7 +2918,7 @@ yyreduce:
   case 48: /* Params: Params ';' Param  */
 #line 490 "src/parser.y"
                  {
-  (yyval.blk) = BLOCK((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = BLOCK_2((yyvsp[-2].blk), (yyvsp[0].blk));
 }
 #line 2924 "src/parser.c"
     break;
@@ -3035,7 +3035,7 @@ yyreduce:
               {
   jv v = jv_string_fmt("*label-%s", jv_string_value((yyvsp[0].literal)));     // impossible symbol
   (yyval.blk) = gen_location((yyloc), locations,
-                    BLOCK(gen_op_unbound(LOADV, jv_string_value(v)),
+                    BLOCK_2(gen_op_unbound(LOADV, jv_string_value(v)),
                     gen_call("error", gen_noop())));
   jv_free(v);
   jv_free((yyvsp[0].literal));
@@ -3282,7 +3282,7 @@ yyreduce:
   case 92: /* Term: '-' Term  */
 #line 652 "src/parser.y"
          {
-  (yyval.blk) = BLOCK((yyvsp[0].blk), gen_call("_negate", gen_noop()));
+  (yyval.blk) = BLOCK_2((yyvsp[0].blk), gen_call("_negate", gen_noop()));
 }
 #line 3288 "src/parser.c"
     break;
@@ -3318,7 +3318,7 @@ yyreduce:
   if (o.first != NULL)
     (yyval.blk) = o;
   else
-    (yyval.blk) = BLOCK(gen_subexp(gen_const(jv_object())), (yyvsp[-1].blk), gen_op_simple(POP));
+    (yyval.blk) = BLOCK_3(gen_subexp(gen_const(jv_object())), (yyvsp[-1].blk), gen_op_simple(POP));
 }
 #line 3324 "src/parser.c"
     break;
@@ -3477,7 +3477,7 @@ yyreduce:
   case 115: /* Args: Args ';' Arg  */
 #line 749 "src/parser.y"
              {
-  (yyval.blk) = BLOCK((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = BLOCK_2((yyvsp[-2].blk), (yyvsp[0].blk));
 }
 #line 3483 "src/parser.c"
     break;
@@ -3493,7 +3493,7 @@ yyreduce:
   case 117: /* RepPatterns: RepPatterns "?//" Pattern  */
 #line 759 "src/parser.y"
                           {
-  (yyval.blk) = BLOCK((yyvsp[-2].blk), gen_destructure_alt((yyvsp[0].blk)));
+  (yyval.blk) = BLOCK_2((yyvsp[-2].blk), gen_destructure_alt((yyvsp[0].blk)));
 }
 #line 3499 "src/parser.c"
     break;
@@ -3509,7 +3509,7 @@ yyreduce:
   case 119: /* Patterns: RepPatterns "?//" Pattern  */
 #line 767 "src/parser.y"
                           {
-  (yyval.blk) = BLOCK((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = BLOCK_2((yyvsp[-2].blk), (yyvsp[0].blk));
 }
 #line 3515 "src/parser.c"
     break;
@@ -3534,7 +3534,7 @@ yyreduce:
   case 122: /* Pattern: '[' ArrayPats ']'  */
 #line 779 "src/parser.y"
                   {
-  (yyval.blk) = BLOCK((yyvsp[-1].blk), gen_op_simple(POP));
+  (yyval.blk) = BLOCK_2((yyvsp[-1].blk), gen_op_simple(POP));
 }
 #line 3540 "src/parser.c"
     break;
@@ -3542,7 +3542,7 @@ yyreduce:
   case 123: /* Pattern: '{' ObjPats '}'  */
 #line 782 "src/parser.y"
                 {
-  (yyval.blk) = BLOCK((yyvsp[-1].blk), gen_op_simple(POP));
+  (yyval.blk) = BLOCK_2((yyvsp[-1].blk), gen_op_simple(POP));
 }
 #line 3548 "src/parser.c"
     break;
@@ -3574,7 +3574,7 @@ yyreduce:
   case 127: /* ObjPats: ObjPats ',' ObjPat  */
 #line 798 "src/parser.y"
                    {
-  (yyval.blk) = BLOCK((yyvsp[-2].blk), (yyvsp[0].blk));
+  (yyval.blk) = BLOCK_2((yyvsp[-2].blk), (yyvsp[0].blk));
 }
 #line 3580 "src/parser.c"
     break;
@@ -3590,7 +3590,7 @@ yyreduce:
   case 129: /* ObjPat: BINDING ':' Pattern  */
 #line 806 "src/parser.y"
                     {
-  (yyval.blk) = gen_object_matcher(gen_const((yyvsp[-2].literal)), BLOCK(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value((yyvsp[-2].literal))), (yyvsp[0].blk)));
+  (yyval.blk) = gen_object_matcher(gen_const((yyvsp[-2].literal)), BLOCK_3(gen_op_simple(DUP), gen_op_unbound(STOREV, jv_string_value((yyvsp[-2].literal))), (yyvsp[0].blk)));
 }
 #line 3596 "src/parser.c"
     break;
@@ -3836,7 +3836,7 @@ yyreduce:
   case 159: /* DictPair: String  */
 #line 909 "src/parser.y"
        {
-  (yyval.blk) = gen_dictpair((yyvsp[0].blk), BLOCK(gen_op_simple(POP), gen_op_simple(DUP2),
+  (yyval.blk) = gen_dictpair((yyvsp[0].blk), BLOCK_4(gen_op_simple(POP), gen_op_simple(DUP2),
                               gen_op_simple(DUP2), gen_op_simple(INDEX)));
 }
 #line 3843 "src/parser.c"

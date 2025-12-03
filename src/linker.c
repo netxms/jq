@@ -428,17 +428,19 @@ int load_program(jq_state *jq, struct locfile* src, block *out_block) {
     return 1;
   }
 
-  jv home = get_home();
-  if (jv_is_valid(home)) {
+// Win32: the followiong code causes loading problem on Windows;
+//        as we do not need it for NetXMS agent, I just comment it out
+//  jv home = get_home();
+//  if (jv_is_valid(home)) {
     /* Import ~/.jq as a library named "" found in $HOME or %USERPROFILE% */
-    block import = gen_import_meta(gen_import("", NULL, 0),
-        gen_const(JV_OBJECT(
-            jv_string("optional"), jv_true(),
-            jv_string("search"), home)));
-    program = BLOCK(import, program);
-  } else {    // silently ignore if home dir not determined
-    jv_free(home);
-  }
+//    block import = gen_import_meta(gen_import("", NULL, 0),
+//        gen_const(JV_OBJECT(
+//            jv_string("optional"), jv_true(),
+//            jv_string("search"), home)));
+//    program = BLOCK_2(import, program);
+//  } else {    // silently ignore if home dir not determined
+//    jv_free(home);
+//  }
 
   nerrors = process_dependencies(jq, jq_get_jq_origin(jq), jq_get_prog_origin(jq), &program, &lib_state);
   block libs = gen_noop();

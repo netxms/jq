@@ -235,7 +235,7 @@ block gen_op_bound(opcode op, block binder) {
 }
 
 block gen_dictpair(block k, block v) {
-  return BLOCK(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
+  return BLOCK_3(gen_subexp(k), gen_subexp(v), gen_op_simple(INSERT));
 }
 
 
@@ -430,7 +430,7 @@ block block_bind_referenced(block binder, block body, int bindflags) {
     if (block_bind_subblock(b, body, bindflags, 0) == 0) {
       block_free(b);
     } else {
-      body = BLOCK(b, body);
+      body = BLOCK_2(b, body);
     }
   }
   return body;
@@ -445,7 +445,7 @@ block block_bind_self(block binder, int bindflags) {
   while ((curr = block_take_last(&binder))) {
     block b = inst_block(curr);
     block_bind_subblock(b, body, bindflags, 0);
-    body = BLOCK(b, body);
+    body = BLOCK_2(b, body);
   }
   return body;
 }
@@ -476,7 +476,7 @@ block block_drop_unreferenced(block body) {
     if (curr->bound_by == curr && !curr->referenced) {
       inst_free(curr);
     } else {
-      refd = BLOCK(refd, inst_block(curr));
+      refd = BLOCK_2(refd, inst_block(curr));
     }
   }
   return refd;
@@ -597,13 +597,13 @@ block gen_subexp(block a) {
     block_free(a);
     return gen_op_pushk_under(c);
   }
-  return BLOCK(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
+  return BLOCK_3(gen_op_simple(SUBEXP_BEGIN), a, gen_op_simple(SUBEXP_END));
 }
 
 block gen_both(block a, block b) {
   block jump = gen_op_targetlater(JUMP);
   block fork = gen_op_target(FORK, jump);
-  block c = BLOCK(fork, a, jump, b);
+  block c = BLOCK_4(fork, a, jump, b);
   inst_set_target(jump, c);
   return c;
 }
@@ -731,12 +731,12 @@ block gen_collect(block expr) {
     return const_array;
 
   block array_var = gen_op_var_fresh(STOREV, "collect");
-  block c = BLOCK(gen_op_simple(DUP), gen_const(jv_array()), array_var);
+  block c = BLOCK_3(gen_op_simple(DUP), gen_const(jv_array()), array_var);
 
-  block tail = BLOCK(gen_op_bound(APPEND, array_var),
+  block tail = BLOCK_2(gen_op_bound(APPEND, array_var),
                      gen_op_simple(BACKTRACK));
 
-  return BLOCK(c,
+  return BLOCK_5(c,
                gen_op_target(FORK, tail),
                expr,
                tail,
@@ -751,7 +751,7 @@ static block bind_matcher(block matcher, block body) {
     if ((i->op == STOREV || i->op == STOREVN) && !i->bound_by)
       block_bind_subblock(inst_block(i), body, OP_HAS_VARIABLE, 0);
   }
-  return BLOCK(matcher, body);
+  return BLOCK_2(matcher, body);
 }
 
 
@@ -800,7 +800,7 @@ static block bind_alternation_matchers(block matchers, block body) {
 
   // We need a preamble of STOREVs to which to bind the matchers and the body.
   jv_object_keys_foreach(all_vars, key) {
-    preamble = BLOCK(preamble,
+    preamble = BLOCK_4(preamble,
                      gen_op_simple(DUP),
                      gen_const(jv_null()),
                      gen_op_unbound(STOREV, jv_string_value(key)));
@@ -813,10 +813,10 @@ static block bind_alternation_matchers(block matchers, block body) {
     block submatcher = i->subfn;
 
     // If we're successful, jump to the end of the matchers
-    submatcher = BLOCK(submatcher, gen_op_target(JUMP, final_matcher));
+    submatcher = BLOCK_2(submatcher, gen_op_target(JUMP, final_matcher));
 
     // DESTRUCTURE_ALT to the end of this submatcher so we can skip to the next one on error
-    mb = BLOCK(mb, gen_op_target(DESTRUCTURE_ALT, submatcher), submatcher);
+    mb = BLOCK_3(mb, gen_op_target(DESTRUCTURE_ALT, submatcher), submatcher);
 
     // We're done with this inst and we don't want it anymore
     // But we can't let it free the submatcher block.
@@ -825,19 +825,19 @@ static block bind_alternation_matchers(block matchers, block body) {
   // We're done with these insts now.
   block_free(altmatchers);
 
-  return bind_matcher(preamble, BLOCK(mb, final_matcher, body));
+  return bind_matcher(preamble, BLOCK_3(mb, final_matcher, body));
 }
 
 block gen_reduce(block source, block matcher, block init, block body) {
   block res_var = gen_op_var_fresh(STOREV, "reduce");
-  block loop = BLOCK(gen_op_simple(DUPN),
+  block loop = BLOCK_4(gen_op_simple(DUPN),
                      source,
                      bind_alternation_matchers(matcher,
-                                  BLOCK(gen_op_bound(LOADVN, res_var),
+                                  BLOCK_3(gen_op_bound(LOADVN, res_var),
                                         body,
                                         gen_op_bound(STOREV, res_var))),
                      gen_op_simple(BACKTRACK));
-  return BLOCK(gen_op_simple(DUP),
+  return BLOCK_6(gen_op_simple(DUP),
                init,
                res_var,
                gen_op_target(FORK, loop),
@@ -847,7 +847,7 @@ block gen_reduce(block source, block matcher, block init, block body) {
 
 block gen_foreach(block source, block matcher, block init, block update, block extract) {
   block state_var = gen_op_var_fresh(STOREV, "foreach");
-  return BLOCK(gen_op_simple(DUP),
+  return BLOCK_6(gen_op_simple(DUP),
                init,
                state_var,
                gen_op_simple(DUP),
@@ -857,7 +857,7 @@ block gen_foreach(block source, block matcher, block init, block update, block e
                // in the body to see
                bind_alternation_matchers(matcher,
                             // load the loop state variable
-                            BLOCK(gen_op_bound(LOADVN, state_var),
+                            BLOCK_5(gen_op_bound(LOADVN, state_var),
                                   // generate updated state
                                   update,
                                   // save the updated state for value extraction
@@ -871,11 +871,11 @@ block gen_foreach(block source, block matcher, block init, block update, block e
 block gen_definedor(block a, block b) {
   // var found := false
   block found_var = gen_op_var_fresh(STOREV, "found");
-  block init = BLOCK(gen_op_simple(DUP), gen_const(jv_false()), found_var);
+  block init = BLOCK_3(gen_op_simple(DUP), gen_const(jv_false()), found_var);
 
   // if found, backtrack. Otherwise execute b
   block backtrack = gen_op_simple(BACKTRACK);
-  block tail = BLOCK(gen_op_simple(DUP),
+  block tail = BLOCK_6(gen_op_simple(DUP),
                      gen_op_bound(LOADV, found_var),
                      gen_op_target(JUMP_F, backtrack),
                      backtrack,
@@ -886,12 +886,12 @@ block gen_definedor(block a, block b) {
   block if_notfound = gen_op_simple(BACKTRACK);
 
   // found := true, produce result
-  block if_found = BLOCK(gen_op_simple(DUP),
+  block if_found = BLOCK_4(gen_op_simple(DUP),
                          gen_const(jv_true()),
                          gen_op_bound(STOREV, found_var),
                          gen_op_target(JUMP, tail));
 
-  return BLOCK(init,
+  return BLOCK_7(init,
                gen_op_target(FORK, if_notfound),
                a,
                gen_op_target(JUMP_F, if_found),
@@ -915,25 +915,25 @@ int block_is_funcdef(block b) {
 }
 
 block gen_condbranch(block iftrue, block iffalse) {
-  iftrue = BLOCK(iftrue, gen_op_target(JUMP, iffalse));
-  return BLOCK(gen_op_target(JUMP_F, iftrue), iftrue, iffalse);
+  iftrue = BLOCK_2(iftrue, gen_op_target(JUMP, iffalse));
+  return BLOCK_3(gen_op_target(JUMP_F, iftrue), iftrue, iffalse);
 }
 
 block gen_and(block a, block b) {
   // a and b = if a then (if b then true else false) else false
-  return BLOCK(gen_op_simple(DUP), a,
-               gen_condbranch(BLOCK(gen_op_simple(POP),
+  return BLOCK_3(gen_op_simple(DUP), a,
+               gen_condbranch(BLOCK_3(gen_op_simple(POP),
                                     b,
                                     gen_condbranch(gen_const(jv_true()),
                                                    gen_const(jv_false()))),
-                              BLOCK(gen_op_simple(POP), gen_const(jv_false()))));
+                              BLOCK_2(gen_op_simple(POP), gen_const(jv_false()))));
 }
 
 block gen_or(block a, block b) {
   // a or b = if a then true else (if b then true else false)
-  return BLOCK(gen_op_simple(DUP), a,
-               gen_condbranch(BLOCK(gen_op_simple(POP), gen_const(jv_true())),
-                              BLOCK(gen_op_simple(POP),
+  return BLOCK_3(gen_op_simple(DUP), a,
+               gen_condbranch(BLOCK_2(gen_op_simple(POP), gen_const(jv_true())),
+                              BLOCK_3(gen_op_simple(POP),
                                     b,
                                     gen_condbranch(gen_const(jv_true()),
                                                    gen_const(jv_false())))));
@@ -975,12 +975,12 @@ block gen_array_matcher(block left, block curr) {
   }
 
   // `left` goes at the end so that the const index is in a predictable place
-  return BLOCK(gen_op_simple(DUP), gen_subexp(gen_const(jv_number(index))),
+  return BLOCK_5(gen_op_simple(DUP), gen_subexp(gen_const(jv_number(index))),
                gen_op_simple(INDEX), curr, left);
 }
 
 block gen_object_matcher(block name, block curr) {
-  return BLOCK(gen_op_simple(DUP), gen_subexp(name), gen_op_simple(INDEX),
+  return BLOCK_4(gen_op_simple(DUP), gen_subexp(name), gen_op_simple(INDEX),
                curr);
 }
 
@@ -993,23 +993,23 @@ block gen_destructure(block var, block matchers, block body) {
   if (matchers.first && matchers.first->op == DESTRUCTURE_ALT) {
     block_append(&var, gen_op_simple(DUP));
   } else {
-    top = BLOCK(top, gen_op_simple(DUP));
+    top = BLOCK_2(top, gen_op_simple(DUP));
   }
 
-  return BLOCK(top, gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
+  return BLOCK_4(top, gen_subexp(var), gen_op_simple(POP), bind_alternation_matchers(matchers, body));
 }
 
 // Like gen_var_binding(), but bind `break`'s wildcard unbound variable
 static block gen_wildvar_binding(block var, const char* name, block body) {
-  return BLOCK(gen_op_simple(DUP), var,
+  return BLOCK_3(gen_op_simple(DUP), var,
                block_bind(gen_op_unbound(STOREV, name),
                           body, OP_HAS_VARIABLE | OP_BIND_WILDCARD));
 }
 
 block gen_cond(block cond, block iftrue, block iffalse) {
-  return BLOCK(gen_op_simple(DUP), BLOCK(gen_subexp(cond), gen_op_simple(POP)),
-               gen_condbranch(BLOCK(gen_op_simple(POP), iftrue),
-                              BLOCK(gen_op_simple(POP), iffalse)));
+  return BLOCK_3(gen_op_simple(DUP), BLOCK_2(gen_subexp(cond), gen_op_simple(POP)),
+                 gen_condbranch(BLOCK_2(gen_op_simple(POP), iftrue),
+                                BLOCK_2(gen_op_simple(POP), iffalse)));
 }
 
 block gen_try(block exp, block handler) {
@@ -1041,19 +1041,19 @@ block gen_try(block exp, block handler) {
    */
 
   if (block_is_noop(handler))
-    handler = BLOCK(gen_op_simple(DUP), gen_op_simple(POP));
+    handler = BLOCK_2(gen_op_simple(DUP), gen_op_simple(POP));
 
   block jump = gen_op_target(JUMP, handler);
-  return BLOCK(gen_op_target(TRY_BEGIN, jump), exp, gen_op_simple(TRY_END),
+  return BLOCK_5(gen_op_target(TRY_BEGIN, jump), exp, gen_op_simple(TRY_END),
                jump, handler);
 }
 
 block gen_label(const char *label, block exp) {
   block cond = gen_call("_equal",
-                        BLOCK(gen_lambda(gen_noop()),
+                        BLOCK_2(gen_lambda(gen_noop()),
                               gen_lambda(gen_op_unbound(LOADV, label))));
   return gen_wildvar_binding(gen_op_simple(GENLABEL), label,
-                             BLOCK(gen_op_simple(POP),
+                             BLOCK_2(gen_op_simple(POP),
                                    // try exp catch if . == $label
                                    //               then empty
                                    //               else error end
@@ -1074,7 +1074,7 @@ block gen_cbinding(const struct cfunction* cfunctions, int ncfunctions, block co
     i->symbol = strdup(cfunctions[cfunc].name);
     i->nformals = cfunctions[cfunc].nargs - 1;
     i->any_unbound = 0;
-    code = BLOCK(inst_block(i), code);
+    code = BLOCK_2(inst_block(i), code);
   }
   return code;
 }
@@ -1143,7 +1143,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
           locfile_locate(curr->locfile, curr->source, "jq: error: %s/%d is not defined", curr->symbol, curr->nactuals);
         errors++;
         // don't process this instruction if it's not well-defined
-        ret = BLOCK(ret, inst_block(curr));
+        ret = BLOCK_2(ret, inst_block(curr));
         continue;
       }
     }
@@ -1192,7 +1192,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
           inst_free(i);
           // arguments should be pushed in reverse order, prepend them to prelude
           errors += expand_call_arglist(&body, args, env);
-          prelude = BLOCK(gen_subexp(body), prelude);
+          prelude = BLOCK_2(gen_subexp(body), prelude);
           actual_args++;
         }
         assert(curr->op == CALL_JQ);
@@ -1207,7 +1207,7 @@ static int expand_call_arglist(block* b, jv args, jv *env) {
 
       assert(actual_args == desired_args); // because now handle this above
     }
-    ret = BLOCK(ret, prelude, inst_block(curr));
+    ret = BLOCK_3(ret, prelude, inst_block(curr));
   }
   *b = ret;
   return errors;
@@ -1219,7 +1219,7 @@ static int compile(struct bytecode* bc, block b, struct locfile* lf, jv args, jv
   int var_frame_idx = 0;
   bc->nsubfunctions = 0;
   errors += expand_call_arglist(&b, args, env);
-  b = BLOCK(b, gen_op_simple(RET));
+  b = BLOCK_2(b, gen_op_simple(RET));
   jv localnames = jv_array();
   for (inst* curr = b.first; curr; curr = curr->next) {
     if (!curr->next) assert(curr == b.last);
