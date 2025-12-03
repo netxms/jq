@@ -1362,7 +1362,7 @@ static jv f_string_implode(jq_state *jq, jv a) {
       return type_error(n, "can't be imploded, unicode codepoint needs to be numeric");
     }
 
-    int nv = jv_number_value(n);
+    int nv = (int)jv_number_value(n);
     jv_free(n);
     // outside codepoint range or in utf16 surrogate pair range
     if (nv < 0 || nv > 0x10FFFF || (nv >= 0xD800 && nv <= 0xDFFF))
@@ -1674,7 +1674,7 @@ static jv f_mktime(jq_state *jq, jv a) {
     return jv_invalid_with_msg(jv_string("invalid gmtime representation"));
   if (t == (time_t)-2)
     return jv_invalid_with_msg(jv_string("mktime not supported on this platform"));
-  return jv_number(t);
+  return jv_number((double)t);
 }
 
 #ifdef HAVE_GMTIME_R
@@ -1852,7 +1852,7 @@ static jv f_now(jq_state *jq, jv a) {
 #else
 static jv f_now(jq_state *jq, jv a) {
   jv_free(a);
-  return jv_number(time(NULL));
+  return jv_number((double)time(NULL));
 }
 #endif
 

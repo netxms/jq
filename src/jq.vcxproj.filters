@@ -66,12 +66,6 @@
     <ClCompile Include="jv_dtoa.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="decNumber\decContext.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="decNumber\decNumber.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="jv_dtoa_tsd.c">
       <Filter>Source Files</Filter>
     </ClCompile>
